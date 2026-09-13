@@ -1,0 +1,75 @@
+#!/bin/sh
+# Copyright 2026 Pax Project
+#
+# Licensed under the Pax Public License, Version 5.0 (the "License");
+# you may not use this file except in compliance with the License.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: LicenseRef-Pax-5.0
+#
+# You may obtain a copy of the full License text within the Source or Object 
+# (or Binary) form materials provided with this distribution (typically in a 
+# "LICENSE" file, or "LICENSE-PAX" if there is more than one file named "LICENSE").
+
+set -eu
+
+# 1. Verify existence of the core C system compiler
+CC="cc"
+printf "checking for cc... "
+if command -v cc >/dev/null 2>&1; then
+    echo "yes"
+else
+    echo "no"
+    echo "[ERROR] 'cc' not found. Stop." >&2
+    exit 1
+fi
+
+# 2. Establish required layout header files for PAXM specification core
+HEADERS="stdio.h stdlib.h stdint.h stdbool.h stddef.h string.h"
+
+# 3. Comprehensive validation loop over every single required system layout header
+for header in $HEADERS; do
+    printf "checking for <%s>... " "$header"
+    
+    # Strictly portable POSIX check without assuming 'cc -E -' pipeline support
+    echo "#include <$header>" > .tmp_check.c
+    if cc -E .tmp_check.c >/dev/null 2>&1; then
+        echo "yes"
+    else
+        echo "no"
+        echo "[ERROR] critical dependency <$header> is missing from the host environment, Stop." >&2
+        rm -f .tmp_check.c
+        exit 1
+    fi
+done
+rm -f .tmp_check.c
+
+# 4. Set target parameter to compile a clean single object file
+CFLAGS="-Wall -Wextra -std=c99"
+TARGET="paxm.o"
+
+# 5. Output the completed local build rules Makefile
+printf "configure: creating Makefile... "
+cat << EOF > Makefile
+.POSIX:
+
+CC = $CC
+CFLAGS = $CFLAGS
+TARGET = $TARGET
+
+SRC = paxm.c
+
+all: \$(TARGET)
+
+\$(TARGET): \$(SRC)
+	\$(CC) \$(CFLAGS) -c \$(SRC) -o \$(TARGET)
+
+clean:
+	rm -f \$(TARGET) Makefile
+EOF
+echo "done"

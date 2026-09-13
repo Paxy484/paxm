@@ -1,0 +1,44 @@
+# Copyright 2026 Pax Project
+#
+# Licensed under the Pax Public License, Version 5.0 (the "License");
+# you may not use this file except in compliance with the License.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: LicenseRef-Pax-5.0
+#
+# You may obtain a copy of the full License text within the Source or Object 
+# (or Binary) form materials provided with this distribution (typically in a 
+# "LICENSE" file, or "LICENSE-PAX" if there is more than one file named "LICENSE").
+
+# 1. Compiler Execution and Flag Directives
+CC     = wcl386
+AR     = wlib
+CFLAGS = -od -zq -bt=dos -l=dos4g -std=c99
+
+# -od:     Force DISABLING of all automatic optimization logic
+# -zq:     Execute silently
+# -bt=dos: Target standard DOS environments natively
+# -l=dos4g: Bind to the DOS/4GW 32-Bit Linear Address Extender
+
+TARGET = paxm.lib
+SRC    = paxm.c
+OBJ    = paxm.obj
+
+# 2. Primary Execution Rule Blocks
+all : $(TARGET)
+
+$(TARGET) : $(OBJ)
+	$(AR) -q -n $(TARGET) +$(OBJ)
+
+$(OBJ) : $(SRC)
+	$(CC) $(CFLAGS) -c $(SRC)
+
+# 3. Pristine State Restoration File Eraser
+clean : .SYMBOLIC
+	del *.obj
+	del *.lib
