@@ -18,8 +18,7 @@ See `BUILD.md` for tutorial!
 
 ### LEGAL
 
-The PAXM reference engine code and configuration tools (`paxm.h`, `paxm.c`, `configure`, `WMAKE.WPJ`) is licensed under the **Pax Public License, Version 5.0**. You can view the full license text at `LICENSE-PAX`.
-
-The resulting binary output file structure (`.paxm`) is dedicated to the public domain under the **Pax Public Domain Dedication, Version 1.0**. You can view the full fallback terms at `LICENSE-PAX-PPD`.
+Paxm is in licensed under "Unlicense"
+See LICENSE file for more info!
 
 Yes, `.paxm` is open-file format!
