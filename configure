@@ -1,75 +1,105 @@
 #!/bin/sh
-# Copyright 2026 Pax Project
-#
-# Licensed under the Pax Public License, Version 5.0 (the "License");
-# you may not use this file except in compliance with the License.
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" basis,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# SPDX-License-Identifier: LicenseRef-Pax-5.0
-#
-# You may obtain a copy of the full License text within the Source or Object 
-# (or Binary) form materials provided with this distribution (typically in a 
-# "LICENSE" file, or "LICENSE-PAX" if there is more than one file named "LICENSE").
 
-set -eu
+# Initialize flag state trackers
+DEBUG_MODE="no"
 
-# 1. Verify existence of the core C system compiler
+# Pure POSIX argument parser loop
+for arg in "$@"; do
+    case "$arg" in
+        -debug|--debug)
+            DEBUG_MODE="yes"
+            ;;
+        *)
+            echo "[WARNING] Unknown configuration parameter: $arg" >&2
+            ;;
+    esac
+done
+
 CC="cc"
 printf "checking for cc... "
 if command -v cc >/dev/null 2>&1; then
     echo "yes"
 else
     echo "no"
-    echo "[ERROR] 'cc' not found. Stop." >&2
+    echo "[ERROR] System compiler 'cc' not found." >&2
     exit 1
 fi
 
-# 2. Establish required layout header files for PAXM specification core
-HEADERS="stdio.h stdlib.h stdint.h stdbool.h stddef.h string.h"
+# Hardened validation tracking check for the system linker tool
+LD="ld"
+printf "checking for ld... "
+if command -v ld >/dev/null 2>&1; then
+    echo "yes"
+else
+    echo "no"
+    echo "[ERROR] linker 'ld' not found." >&2
+    exit 1
+fi
 
-# 3. Comprehensive validation loop over every single required system layout header
-for header in $HEADERS; do
-    printf "checking for <%s>... " "$header"
-    
-    # Strictly portable POSIX check without assuming 'cc -E -' pipeline support
-    echo "#include <$header>" > .tmp_check.c
-    if cc -E .tmp_check.c >/dev/null 2>&1; then
-        echo "yes"
-    else
-        echo "no"
-        echo "[ERROR] critical dependency <$header> is missing from the host environment, Stop." >&2
-        rm -f .tmp_check.c
-        exit 1
-    fi
-done
-rm -f .tmp_check.c
+# 2. Set final cross-platform flags and target layouts
+EXE=""
+IS_WINDOWS="no"
 
-# 4. Set target parameter to compile a clean single object file
-CFLAGS="-Wall -Wextra -std=c99"
-TARGET="paxm.o"
+if [ "$DEBUG_MODE" = "yes" ]; then
+    printf "configure: configuring build for DEBUGGING... \n"
+    CFLAGS="-Wall -Wextra -g -O0 -Iinclude"
+else
+    CFLAGS="-Wall -Wextra -Iinclude"
+fi
 
-# 5. Output the completed local build rules Makefile
+LIBS="-lm"
+
+case "$(uname -s 2>/dev/null)" in
+    *MINGW*|*MSYS*)
+        EXE=".exe"
+        IS_WINDOWS="yes"
+        ;;
+    *)
+        # Keep standard POSIX limits intact
+        ;;
+esac
+
+# Instantiate a true POSIX Tab variable to guarantee rule separators
+T=$(printf '\t')
+
+# 3. Output the completed local build rules Makefile (Configured for multiple targets)
 printf "configure: creating Makefile... "
 cat << EOF > Makefile
-.POSIX:
-
 CC = $CC
+LD = $LD
 CFLAGS = $CFLAGS
-TARGET = $TARGET
+LIBS = $LIBS
 
-SRC = paxm.c
+MID2PAXM = mid2paxm$EXE
+PAXM2CSV = paxm2csv$EXE
+CSV2PAXM = csv2paxm$EXE
+PAXM2MID = paxm2mid$EXE
 
-all: \$(TARGET)
+TARGETS = \$(MID2PAXM) \$(PAXM2CSV) \$(CSV2PAXM) \$(PAXM2MID)
 
-\$(TARGET): \$(SRC)
-	\$(CC) \$(CFLAGS) -c \$(SRC) -o \$(TARGET)
+all: \$(TARGETS)
+
+src/paxm.o: src/paxm.c include/paxm.h
+${T}\$(CC) \$(CFLAGS) -c src/paxm.c -o src/paxm.o
+
+\$(MID2PAXM): src/mid2paxm.c src/paxm.o
+${T}\$(CC) \$(CFLAGS) src/mid2paxm.c src/paxm.o -o \$(MID2PAXM) \$(LIBS)
+
+\$(PAXM2CSV): src/paxm2csv.c src/paxm.o
+${T}\$(CC) \$(CFLAGS) src/paxm2csv.c src/paxm.o -o \$(PAXM2CSV) \$(LIBS)
+
+\$(CSV2PAXM): src/csv2paxm.c src/paxm.o
+${T}\$(CC) \$(CFLAGS) src/csv2paxm.c src/paxm.o -o \$(CSV2PAXM) \$(LIBS)
+
+\$(PAXM2MID): src/paxm2mid.c src/paxm.o
+${T}\$(CC) \$(CFLAGS) src/paxm2mid.c src/paxm.o -o \$(PAXM2MID) \$(LIBS)
 
 clean:
-	rm -f \$(TARGET) Makefile
+${T}rm -f src/*.o \$(TARGETS)
+
+distclean: clean
+${T}rm -f Makefile
+
+.PHONY: all clean distclean
 EOF
 echo "done"

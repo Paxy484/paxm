@@ -1,0 +1,19 @@
+= PAXM
+:idprefix:
+:idseparator: -
+
+PAXM is a binary file format specification that works like a MIDI file but built completely from scratch! PAXM is still in beta and it is not the full version yet. I created this for fun, so expect it to not be your perfect file format or anything like that.
+
+== Extra Features
+* Deathcore production mode
+* Speed Metal production mode
+
+If you want to use standard MIDI (not PAXM) itself, I highly suggest using https://midis2jam2.xyz/[midis2jam2], it is a really cool piece of software!
+
+== BUILDING
+See `BUILD.adoc` for the compilation tutorial!
+
+== LEGAL
+PAXM is an open-file format licensed under the public-domain-like **MIT No Attribution License (MIT-0)**. 
+
+See the `LICENSE` file for more detailed information!
