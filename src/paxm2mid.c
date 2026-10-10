@@ -144,11 +144,11 @@ int convert_paxm_to_midi0(const char *paxm_input, const char *midi_output) {
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        printf("Usage: %s <input.pxm> <output.mid>\n", argv);
+        printf("Usage: %s <input.pxm> <output.mid>\n", argv[0]);
         return 1;
     }
     
-    if (convert_paxm_to_midi0(argv, argv) == PAXM_OK) {
+    if (convert_paxm_to_midi0(argv[1], argv[2]) == PAXM_OK) {
         printf("Success! Output translated seamlessly into standard MIDI format.\n");
         return 0;
     }
